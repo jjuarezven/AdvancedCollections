@@ -150,7 +150,7 @@ namespace Pluralsight.AdvCShColls.TourBooker.UI
 			}
 			this.tbxToursItinerary.Text = sb.ToString();
 		}
-		private void btnBookTour_Click(object sender, RoutedEventArgs e)
+		private async void btnBookTour_Click(object sender, RoutedEventArgs e)
 		{
 			Customer customer = this.lbxCustomer.SelectedItem as Customer;
 			if (customer == null)
@@ -166,30 +166,42 @@ namespace Pluralsight.AdvCShColls.TourBooker.UI
 				return;
 			}
 
+			List<Task> tasks = new List<Task>();
 			foreach (Tour tour in requestedTours)
 			{
-				this.AllData.BookingRequests.Enqueue((customer, tour));
+				Task task = Task.Run(
+					() => this.AllData.BookingRequests.Enqueue((customer, tour))
+				);
+				tasks.Add(task);
 			}
+			await Task.WhenAll(tasks);
+
 			MessageBox.Show($"{requestedTours.Count} tours requested", "Tours requested");
 			this.UpdateAllLists();
 		}
 
 		private void btnApproveRequest_Click(object sender, RoutedEventArgs e)
 		{
-			if (AllData.BookingRequests.Count == 0)
-				return;
+			//if (AllData.BookingRequests.Count == 0)
+			//	return;
 
-			var request = AllData.BookingRequests.Dequeue();
-			request.TheCustomer.BookedTours.Add(request.TheTour);
-			this.UpdateAllLists();
+			//var request = AllData.BookingRequests.Dequeue();
+			var success = AllData.BookingRequests.TryDequeue(out (Customer TheCustomer, Tour TheTour) request);
+            if (success)
+            {
+                request.TheCustomer.BookedTours.Add(request.TheTour);
+                this.UpdateAllLists(); 
+            }
 		}
 
 		private string GetLatestBookingRequestText()
 		{
-			if (AllData.BookingRequests.Count == 0)
-				return null;
-			else
-				return AllData.BookingRequests.Peek().ToString();
+			//if (AllData.BookingRequests.Count == 0)
+			//	return null;
+			//else
+			//	return AllData.BookingRequests.Peek().ToString();
+			var success = AllData.BookingRequests.TryPeek(out (Customer TheCustomer, Tour TheTour) request);
+			return success ? request.ToString() : null;
 		}
 
 		private void lbxCustomer_SelectionChanged(object sender, SelectionChangedEventArgs e)

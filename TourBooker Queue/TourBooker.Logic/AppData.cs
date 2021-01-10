@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,8 +14,8 @@ namespace Pluralsight.AdvCShColls.TourBooker.Logic
 		public List<Customer> Customers { get; private set; }
 			 = new List<Customer>() { new Customer("Simon"), new Customer("Kim") };
 		// (Customer TheCustomer, Tour TheTour) is a touple
-		public Queue<(Customer TheCustomer, Tour TheTour)> BookingRequests { get; }
-			= new Queue<(Customer, Tour)>();
+		public ConcurrentQueue<(Customer TheCustomer, Tour TheTour)> BookingRequests { get; }
+			= new ConcurrentQueue<(Customer, Tour)>();
 		public LinkedList<Country> ItineraryBuilder { get; } = new LinkedList<Country>();
 		public SortedDictionary<string, Tour> AllTours { get; private set; } 
 			= new SortedDictionary<string, Tour>();
