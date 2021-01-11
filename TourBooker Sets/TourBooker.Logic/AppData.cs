@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,8 +11,10 @@ namespace Pluralsight.AdvCShColls.TourBooker.Logic
 {
 	public class AppData
 	{
-		public List<Country> AllCountries { get; private set; }
-		public Dictionary<CountryCode, Country> AllCountriesByKey { get; private set; }
+		//public ReadOnlyCollection<Country> AllCountries { get; private set; }
+		public IReadOnlyList<Country> AllCountries { get; private set; }
+		//public ReadOnlyDictionary<CountryCode, Country> AllCountriesByKey { get; private set; }
+		public ImmutableDictionary<CountryCode, Country> AllCountriesByKey { get; private set; }
 		public List<Customer> Customers { get; private set; }
 			 = new List<Customer>() { new Customer("Simon"), new Customer("Kim") };
 		public ConcurrentQueue<(Customer TheCustomer, Tour TheTour)> BookingRequests { get; }
@@ -23,10 +27,19 @@ namespace Pluralsight.AdvCShColls.TourBooker.Logic
 		public void Initialize(string csvFilePath)
 		{
 			CsvReader reader = new CsvReader(csvFilePath);
-			this.AllCountries = reader.ReadAllCountries().OrderBy(x=>x.Name).ToList();
-			var dict = AllCountries.ToDictionary(x => x.Code);
-			this.AllCountriesByKey = dict;
+			//this.AllCountries = reader.ReadAllCountries().OrderBy(x=>x.Name).ToList();
+			var countries = reader.ReadAllCountries().OrderBy(x => x.Name);
+			//this.AllCountries = countries.AsReadOnly();
+			this.AllCountries = countries.ToImmutableArray();
+
+			//var dict = AllCountries.ToDictionary(x => x.Code);
+			//this.AllCountriesByKey = dict;
+			//this.AllCountriesByKey = new ReadOnlyDictionary<CountryCode, Country>(dict);
+			this.AllCountriesByKey = AllCountries.ToImmutableDictionary(x => x.Code);
 			this.SetupHardCodedTours();
+
+			// readonly collections are wrappers to normal collections, so if you modify the normal collection, the readonly collection is modified as well
+			// countries.Add(new Country("Lilliput", "LIL", "somewhere", 111));
 		}
 		void SetupHardCodedTours()
 		{
